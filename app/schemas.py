@@ -86,6 +86,21 @@ class Customer(CustomerBase):
         orm_mode = True
 
 
+# Customer output (excludes password)
+class CustomerOut(BaseModel):
+    customerID: int
+    firstName: str
+    lastName: str
+    zipCode: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    address: Optional[str] = None
+    user: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
 # BookOrder
 class BookOrderBase(BaseModel):
     customerID: int
@@ -101,6 +116,26 @@ class BookOrder(BookOrderBase):
 
     class Config:
         orm_mode = True
+
+
+# Items inside an order returned to client
+class OrderItem(BaseModel):
+    title: str
+    price: int
+
+
+class CustomerOrder(BaseModel):
+    orderID: int
+    items: List[OrderItem]
+
+    class Config:
+        orm_mode = True
+
+
+# Login
+class LoginRequest(BaseModel):
+    user: str
+    password: str
 
 
 # Ordering (association) - simple representation

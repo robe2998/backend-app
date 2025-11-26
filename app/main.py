@@ -265,3 +265,22 @@ def delete_ordering(book_id: int, order_id: int, customer_id: int, db: Session =
     if not ok:
         raise HTTPException(status_code=404, detail="Ordering not found")
     return {"ok": True}
+
+
+# Login endpoint
+@app.post("/login", response_model=schemas.CustomerOut)
+def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
+    cust = crud.authenticate_customer(db, payload.user, payload.password)
+    if not cust:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return cust
+
+
+# Return orders for a given customer with book title and price
+@app.get("/customers/{customer_id}/orders_info", response_model=List[schemas.CustomerOrder])
+def customer_orders(customer_id: int, db: Session = Depends(get_db)):
+    # verify customer exists
+    cust = crud.get_customer(db, customer_id)
+    if not cust:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return crud.get_customer_orders(db, customer_id)

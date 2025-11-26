@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import List
 from . import models, schemas
+from sqlalchemy import select
 
 
 # Authors
@@ -250,6 +251,27 @@ def get_orders(db: Session, skip: int = 0, limit: int = 100):
 
 def get_order(db: Session, order_id: int):
     return db.query(models.BookOrder).filter(models.BookOrder.orderID == order_id).first()
+
+
+def authenticate_customer(db: Session, user: str, password: str):
+    """Return customer model if credentials match, else None."""
+    return db.query(models.Customer).filter(models.Customer.user == user, models.Customer.password == password).first()
+
+
+def get_customer_orders(db: Session, customer_id: int):
+    """Return a list of orders for a customer. Each order contains items with title and price."""
+    orders = db.query(models.BookOrder).filter(models.BookOrder.customerID == customer_id).all()
+    result = []
+    for o in orders:
+        rows = (
+            db.query(models.Book.title, models.Book.price)
+            .join(models.Ordering, models.Book.bookID == models.Ordering.bookID)
+            .filter(models.Ordering.orderID == o.orderID, models.Ordering.customer_id == customer_id)
+            .all()
+        )
+        items = [{"title": t, "price": p} for t, p in rows]
+        result.append({"orderID": o.orderID, "items": items})
+    return result
 
 
 def create_order(db: Session, order: schemas.BookOrderCreate):
