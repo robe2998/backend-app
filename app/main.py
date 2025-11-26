@@ -1,5 +1,7 @@
 import os
-from fastapi import FastAPI, Depends, HTTPException
+import imghdr
+from fastapi import FastAPI, Depends, HTTPException, Response
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -30,6 +32,11 @@ def _detect_image_mime(b: bytes) -> str | None:
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Bookstore API")
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/authors/", response_model=List[schemas.Author])
