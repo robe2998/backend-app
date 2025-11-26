@@ -324,7 +324,7 @@ def get_orderings(db: Session, skip: int = 0, limit: int = 100):
 
 
 def create_ordering(db: Session, ordering: schemas.OrderingCreate):
-    db_obj = models.Ordering(bookID=ordering.bookID, orderID=ordering.orderID, customer_id=ordering.customer_id)
+    db_obj = models.Ordering(bookID=ordering.bookID, orderID=ordering.orderID, customer_id=ordering.customerid)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)

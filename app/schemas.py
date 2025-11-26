@@ -142,7 +142,8 @@ class LoginRequest(BaseModel):
 class OrderingBase(BaseModel):
     bookID: int
     orderID: int
-    customer_id: int
+    # use `customerid` to match DB/other schemas naming
+    customerid: int
 
 
 class OrderingCreate(OrderingBase):
