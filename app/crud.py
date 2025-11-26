@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import List
 from . import models, schemas
-import base64
 
 
 # Authors
@@ -78,8 +77,7 @@ def delete_category(db: Session, category_id: int):
 
 # Books
 def get_books(db: Session, skip: int = 0, limit: int = 100):
-    books = db.query(models.Book).offset(skip).limit(limit).all()
-    return [_book_to_dict(b) for b in books]
+    return db.query(models.Book).offset(skip).limit(limit).all()
 
 
 def find_books(
@@ -106,15 +104,11 @@ def find_books(
         q = q.filter(models.Book.price >= min_price)
     if max_price is not None:
         q = q.filter(models.Book.price <= max_price)
-    books = q.offset(skip).limit(limit).all()
-    return [_book_to_dict(b) for b in books]
+    return q.offset(skip).limit(limit).all()
 
 
 def get_book(db: Session, book_id: int):
-    b = db.query(models.Book).filter(models.Book.bookID == book_id).first()
-    if not b:
-        return None
-    return _book_to_dict(b)
+    return db.query(models.Book).filter(models.Book.bookID == book_id).first()
 
 
 def create_book(db: Session, book: schemas.BookCreate):
@@ -133,80 +127,43 @@ def create_book(db: Session, book: schemas.BookCreate):
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
-    return _book_to_dict(db_obj)
+    return db_obj
 
 
 def update_book(db: Session, book_id: int, book: schemas.BookCreate):
     db_obj = get_book(db, book_id)
     if not db_obj:
         return None
-    # db_obj here may be a dict if previously transformed by get_book; fetch real model
-    real = db.query(models.Book).filter(models.Book.bookID == book_id).first()
-    if not real:
-        return None
-    real.categoryID = book.categoryID
-    real.title = book.title
-    real.isbn = book.isbn
-    real.year = book.year
-    real.price = book.price
-    real.noPages = book.noPages
-    real.bookDescription = book.bookDescription
+    db_obj.categoryID = book.categoryID
+    db_obj.title = book.title
+    db_obj.isbn = book.isbn
+    db_obj.year = book.year
+    db_obj.price = book.price
+    db_obj.noPages = book.noPages
+    db_obj.bookDescription = book.bookDescription
     if book.authorIDs is not None:
         authors = db.query(models.Author).filter(models.Author.authorID.in_(book.authorIDs)).all()
-        real.authors = authors
+        db_obj.authors = authors
     db.commit()
-    db.refresh(real)
-    return _book_to_dict(real)
+    db.refresh(db_obj)
+    return db_obj
 
 
 def delete_book(db: Session, book_id: int):
-    real = db.query(models.Book).filter(models.Book.bookID == book_id).first()
-    if not real:
+    db_obj = get_book(db, book_id)
+    if not db_obj:
         return False
-    db.delete(real)
+    db.delete(db_obj)
     db.commit()
     return True
 
 
 # Image retrieval helper (returns raw bytes or None)
 def get_book_image(db: Session, book_id: int):
-    real = db.query(models.Book).filter(models.Book.bookID == book_id).first()
-    if not real:
+    db_obj = get_book(db, book_id)
+    if not db_obj:
         return None
-    return real.image
-
-
-def _book_to_dict(b: models.Book) -> dict:
-    # Convert a Book model into a dict that matches schemas.Book
-    author_names = [a.authorName for a in (b.authors or [])]
-    category_desc = None
-    try:
-        if b.category:
-            category_desc = b.category.categoryDescription
-    except Exception:
-        category_desc = None
-    # encode image as base64 string if present
-    img_b64 = None
-    try:
-        if getattr(b, "image", None):
-            img_b64 = base64.b64encode(b.image).decode("ascii")
-    except Exception:
-        img_b64 = None
-
-    return {
-        "bookID": b.bookID,
-        "categoryID": b.categoryID,
-        "title": b.title,
-        "isbn": b.isbn,
-        "year": b.year,
-        "price": b.price,
-        "noPages": b.noPages,
-        "bookDescription": b.bookDescription,
-        "authors": b.authors,
-        "author": author_names,
-        "category": category_desc,
-        "image": img_b64,
-    }
+    return db_obj.image
 
 
 

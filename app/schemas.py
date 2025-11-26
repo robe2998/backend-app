@@ -53,11 +53,6 @@ class BookCreate(BookBase):
 class Book(BookBase):
     bookID: int
     authors: Optional[List[Author]] = []
-    # convenience fields: list of author names and category description
-    author: Optional[List[str]] = []
-    category: Optional[str] = None
-    # image as a base64-encoded blob string (or null)
-    image: Optional[str] = None
     
     class Config:
         orm_mode = True
