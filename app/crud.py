@@ -259,17 +259,25 @@ def authenticate_customer(db: Session, user: str, password: str):
 
 
 def get_customer_orders(db: Session, customer_id: int):
-    """Return a list of orders for a customer. Each order contains items with title and price."""
+    """Return a list of orders for a customer. Each order contains items with title and price.
+
+    This uses ORM relationships to avoid manual join errors.
+    """
     orders = db.query(models.BookOrder).filter(models.BookOrder.customerID == customer_id).all()
     result = []
     for o in orders:
-        rows = (
-            db.query(models.Book.title, models.Book.price)
-            .join(models.Ordering, models.Book.bookID == models.Ordering.bookID)
-            .filter(models.Ordering.orderID == o.orderID, models.Ordering.customer_id == customer_id)
-            .all()
-        )
-        items = [{"title": t, "price": p} for t, p in rows]
+        items = []
+        # `order_items` relationship on BookOrder points to Ordering objects
+        for ord_row in getattr(o, "order_items", []) or []:
+            # ord_row.book is the related Book (via relationship)
+            try:
+                book = ord_row.book
+                if not book:
+                    continue
+                items.append({"title": book.title, "price": book.price})
+            except Exception:
+                # skip malformed rows but continue processing
+                continue
         result.append({"orderID": o.orderID, "items": items})
     return result
 
