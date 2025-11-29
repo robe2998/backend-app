@@ -206,7 +206,7 @@ def _book_to_dict(b: models.Book) -> dict:
         "bookDescription": b.bookDescription,
         "author": author_str,
         "category": category_desc,
-        "image_url": image_url,
+        "image_url": b.image,
     }
 
 
