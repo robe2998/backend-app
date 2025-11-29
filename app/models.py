@@ -36,7 +36,7 @@ class Book(Base):
     price = Column(Integer, nullable=False)
     noPages = Column("nopages", Integer)
     bookDescription = Column("bookdescription", String(500))
-    image = Column("image", LargeBinary)
+    image = Column("bookdescription", String(500))
 
     category = relationship("Category", back_populates="books")
     authors = relationship("Author", secondary="author_book", back_populates="books")
